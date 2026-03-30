@@ -4,6 +4,8 @@ pipeline {
     environment {
         NODE_VERSION = '18'
         CI = 'true'
+        // ✅ Tell Jenkins exactly where npm is on your Mac
+        PATH = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${env.PATH}"
     }
 
     stages {
@@ -18,14 +20,23 @@ pipeline {
             }
         }
 
-        // STAGE 2: Install dependencies
+        // STAGE 2: Verify Node & npm are available
+        stage('Verify Tools') {
+            steps {
+                echo '========== Checking Node & npm =========='
+                sh '/opt/homebrew/bin/node --version'
+                sh '/opt/homebrew/bin/npm --version'
+            }
+        }
+
+        // STAGE 3: Install dependencies
         stage('Install Dependencies') {
             parallel {
                 stage('Client') {
                     steps {
                         echo '========== Installing Client Dependencies =========='
                         dir('client') {
-                            sh 'npm install'
+                            sh '/opt/homebrew/bin/npm install'
                         }
                     }
                 }
@@ -33,29 +44,29 @@ pipeline {
                     steps {
                         echo '========== Installing Server Dependencies =========='
                         dir('server') {
-                            sh 'npm install'
+                            sh '/opt/homebrew/bin/npm install'
                         }
                     }
                 }
             }
         }
 
-        // STAGE 3: Run Tests
+        // STAGE 4: Run Tests
         stage('Run Tests') {
             steps {
                 echo '========== Running Tests =========='
                 dir('client') {
-                    sh 'npm test -- --watchAll=false --passWithNoTests'
+                    sh '/opt/homebrew/bin/npm test -- --watchAll=false --passWithNoTests'
                 }
             }
         }
 
-        // STAGE 4: Build React App
+        // STAGE 5: Build React App
         stage('Build') {
             steps {
                 echo '========== Building React App =========='
                 dir('client') {
-                    sh 'npm run build'
+                    sh '/opt/homebrew/bin/npm run build'
                     sh 'echo "✅ Build Successful!"'
                     sh 'du -sh build/'
                 }
